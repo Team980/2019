@@ -1,0 +1,72 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2019 FRC Team 980 ThunderBots
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+import edu.wpi.first.gradlerio.GradleRIOPlugin
+
+plugins {
+    id "java"
+    id "idea"
+    id "eclipse"
+    id "edu.wpi.first.GradleRIO" version "2019.3.1"
+}
+
+def MAIN_CLASS = "com.team980.robot2019.Main"
+
+// Instructions on how to configure this are available here:
+// https://github.com/JacisNonsense/EmbeddedTools#spec
+deploy {
+    targets {
+        roboRIO("roborio") {
+            team = 980
+            //addresses << '10.9.80.2' << 172.22.11.2' //In order of preference
+        }
+    }
+    artifacts {
+        frcJavaArtifact("frcJava") {
+            targets << "roborio"
+        }
+    }
+}
+
+repositories {
+    maven { url 'https://nexus.otake.pw/repository/maven-public/' }
+}
+
+dependencies {
+    compile 'pw.otake.pseudoresonance:pixy2-java-api:1.3.1'
+    
+    compile wpi.deps.wpilib()
+    compile wpi.deps.vendor.java()
+    nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
+    nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
+}
+
+jar {
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest GradleRIOPlugin.javaManifest(MAIN_CLASS)
+}
+
+wrapper {
+    gradleVersion = '5.1'
+}
