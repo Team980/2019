@@ -49,7 +49,6 @@ public final class DriveSystem {
         rightEncoder = new Encoder(RIGHT_DRIVE_ENCODER_CHANNEL_A, RIGHT_DRIVE_ENCODER_CHANNEL_B, INVERT_RIGHT_DRIVE_ENCODER, CounterBase.EncodingType.k4X);
         rightEncoder.setDistancePerPulse((TAU * (WHEEL_RADIUS / 12)) / DRIVE_ENCODER_PULSES_PER_REVOLUTION);
         rightEncoder.setPIDSourceType(PIDSourceType.kRate);
-        //rightEncoder.setReverseDirection(true); TODO do I need this?
         rightEncoder.setName("Drive System", "Right Encoder");
 
         rightController = new PIDController(LOW_GEAR_PROPORTIONAL_COEFFICIENT, LOW_GEAR_INTEGRAL_COEFFICIENT, LOW_GEAR_DERIVATIVE_COEFFICIENT, LOW_GEAR_FEEDFORWARD_TERM, rightEncoder, rightDrive);

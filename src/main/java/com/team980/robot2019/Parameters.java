@@ -43,7 +43,7 @@ public final class Parameters {
     public static final int RIGHT_FRONT_DRIVE_CONTROLLER_CAN_ID = 4;
     public static final int RIGHT_BACK_DRIVE_CONTROLLER_CAN_ID = 5;
 
-    // DRIVE SYSTEM: ENCODERS TODO hook up
+    // DRIVE SYSTEM: ENCODERS
     public static final int LEFT_DRIVE_ENCODER_CHANNEL_A = 2;
     public static final int LEFT_DRIVE_ENCODER_CHANNEL_B = 3;
     public static final boolean INVERT_LEFT_DRIVE_ENCODER = false;
@@ -54,7 +54,7 @@ public final class Parameters {
 
     public static final double DRIVE_ENCODER_PULSES_PER_REVOLUTION = 2048.0;
 
-    // DRIVE SYSTEM: VELOCITY CONTROL TODO tune PID
+    // DRIVE SYSTEM: VELOCITY CONTROL
     public static final double MAX_DRIVE_SPEED = 17.0; //in ft/sec
 
     public static final double LOW_GEAR_PROPORTIONAL_COEFFICIENT = 0.1;

@@ -91,8 +91,8 @@ public final class Robot extends TimedRobot {
     @Override
     public void teleopInit() {
         driveSystem.setGear(DriveSystem.Gear.LOW);
-        driveSystem.setPIDEnabled(false); //TODO enable
-        driveSystem.setAutoShiftEnabled(false); //TODO enable
+        driveSystem.setPIDEnabled(true);
+        driveSystem.setAutoShiftEnabled(true);
 
         driveSystem.resetEncoders();
     }
