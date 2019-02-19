@@ -24,7 +24,11 @@
 
 package com.team980.robot2019;
 
+import com.ctre.phoenix.sensors.PigeonIMU;
+import com.team980.robot2019.autonomous.Autonomous;
 import com.team980.robot2019.subsystems.DriveSystem;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
@@ -38,11 +42,19 @@ import static com.team980.robot2019.Parameters.*;
  */
 public final class Robot extends TimedRobot {
 
+    @Deprecated
+    private NetworkTable table;
+
     private Joystick driveStick;
     private Joystick driveWheel;
     private XboxController xboxController;
 
+    private PigeonIMU imu;
+    private double[] ypr; //Stores yaw/pitch/roll from IMU
+
     private DriveSystem driveSystem;
+
+    private Autonomous.Builder autonomous;
 
     /**
      * Robot-wide initialization code goes here.
@@ -50,11 +62,18 @@ public final class Robot extends TimedRobot {
      */
     @Override
     public void robotInit() {
+        table = NetworkTableInstance.getDefault().getTable("Data"); //TODO figure out how they want us to do this
+
         driveStick = new Joystick(DRIVE_STICK_ID);
         driveWheel = new Joystick(DRIVE_WHEEL_ID);
         xboxController = new XboxController(XBOX_CONTROLLER_ID);
 
+        imu = new PigeonIMU(IMU_CAN_ID);
+        ypr = new double[3];
+
         driveSystem = new DriveSystem();
+
+        autonomous = new Autonomous.Builder(driveSystem, ypr);
     }
 
     /**
@@ -62,7 +81,12 @@ public final class Robot extends TimedRobot {
      */
     @Override
     public void robotPeriodic() {
-        //unused
+        imu.getYawPitchRoll(ypr);
+
+        //TODO determine the formal way to do this
+        table.getSubTable("Sensors").getSubTable("IMU").getEntry("Yaw").setNumber(ypr[0]);
+        table.getSubTable("Sensors").getSubTable("IMU").getEntry("Pitch").setNumber(ypr[1]);
+        table.getSubTable("Sensors").getSubTable("IMU").getEntry("Roll").setNumber(ypr[2]);
     }
 
     /**
@@ -70,11 +94,15 @@ public final class Robot extends TimedRobot {
      */
     @Override
     public void autonomousInit() {
-        driveSystem.setGear(DriveSystem.Gear.LOW);
+        imu.setYaw(0, 0);
+
+        driveSystem.setGear(DriveSystem.Gear.HIGH);
         driveSystem.setPIDEnabled(true);
         driveSystem.setAutoShiftEnabled(false);
 
         driveSystem.resetEncoders();
+
+        autonomous.build(Autonomous.Side.RIGHT).start();
     }
 
     /**

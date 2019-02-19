@@ -35,6 +35,12 @@ public final class Parameters {
     public static final int DRIVE_WHEEL_ID = 1;
     public static final int XBOX_CONTROLLER_ID = 2;
 
+    // AUTONOMOUS
+    public static final double AUTO_MIN_SPEED = 0.75; //in ft/sec
+    public static final double AUTO_MAX_SPEED = 4.0; //in ft/sec
+
+    public static final double AUTO_TURN_CORRECTION_DIVISOR = 15;
+
     // DRIVE SYSTEM: SPEED CONTROLLERS
     public static final int LEFT_TOP_DRIVE_CONTROLLER_CAN_ID = 0;
     public static final int LEFT_FRONT_DRIVE_CONTROLLER_CAN_ID = 1;
@@ -85,6 +91,9 @@ public final class Parameters {
 
     public static final double DRIVE_SHIFT_UP_POINT = 4.5; // in ft/sec
     public static final double DRIVE_SHIFT_DOWN_POINT = 4.0; // in ft/sec
+
+    // SENSORS
+    public static final int IMU_CAN_ID = 0;
 
     // CONSTANTS
     public static final double TAU = 2 * Math.PI;
