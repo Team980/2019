@@ -26,6 +26,7 @@ package com.team980.robot2019;
 
 import com.ctre.phoenix.sensors.PigeonIMU;
 import com.team980.robot2019.autonomous.Autonomous;
+import com.team980.robot2019.sensors.Rioduino;
 import com.team980.robot2019.subsystems.DriveSystem;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -52,6 +53,8 @@ public final class Robot extends TimedRobot {
     private PigeonIMU imu;
     private double[] ypr; //Stores yaw/pitch/roll from IMU
 
+    private Rioduino rioduino;
+
     private DriveSystem driveSystem;
 
     private Autonomous.Builder autonomous;
@@ -71,9 +74,11 @@ public final class Robot extends TimedRobot {
         imu = new PigeonIMU(IMU_CAN_ID);
         ypr = new double[3];
 
+        rioduino = new Rioduino();
+
         driveSystem = new DriveSystem();
 
-        autonomous = new Autonomous.Builder(driveSystem, ypr);
+        autonomous = new Autonomous.Builder(driveSystem, ypr, rioduino);
     }
 
     /**
@@ -82,11 +87,15 @@ public final class Robot extends TimedRobot {
     @Override
     public void robotPeriodic() {
         imu.getYawPitchRoll(ypr);
+        rioduino.updateData();
 
         //TODO determine the formal way to do this
         table.getSubTable("Sensors").getSubTable("IMU").getEntry("Yaw").setNumber(ypr[0]);
         table.getSubTable("Sensors").getSubTable("IMU").getEntry("Pitch").setNumber(ypr[1]);
         table.getSubTable("Sensors").getSubTable("IMU").getEntry("Roll").setNumber(ypr[2]);
+
+        table.getSubTable("Vision").getSubTable("Front Camera").getEntry("Target Center Coord").setNumber(rioduino.getTargetCenterCoord());
+        table.getSubTable("Vision").getSubTable("Front Camera").getEntry("Target Width").setNumber(rioduino.getTargetWidth());
     }
 
     /**
