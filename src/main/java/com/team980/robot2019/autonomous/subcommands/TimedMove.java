@@ -3,6 +3,8 @@ package com.team980.robot2019.autonomous.subcommands;
 import com.team980.robot2019.subsystems.DriveSystem;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.shuffleboard.EventImportance;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 import static com.team980.robot2019.Parameters.*;
 
@@ -32,7 +34,7 @@ public final class TimedMove extends Command {
 
     @Override
     protected void initialize() {
-        System.out.println("TimedMove: " + period + " seconds");
+        Shuffleboard.addEventMarker("TimedMove: " + period + " seconds", EventImportance.kTrivial);
 
         driveSystem.resetEncoders();
 

@@ -34,6 +34,7 @@ public final class Parameters {
     public static final int DRIVE_STICK_ID = 0;
     public static final int DRIVE_WHEEL_ID = 1;
     public static final int XBOX_CONTROLLER_ID = 2;
+    public static final int OPERATOR_BOX_ID = 3;
 
     // AUTONOMOUS
     public static final double AUTO_MIN_SPEED = 0.75; //in ft/sec
@@ -102,6 +103,58 @@ public final class Parameters {
 
     public static final double DRIVE_SHIFT_UP_POINT = 4.5; // in ft/sec
     public static final double DRIVE_SHIFT_DOWN_POINT = 4.0; // in ft/sec
+
+    // ROBOT ARM: SPEED CONTROLLERS
+    public static final int SHOULDER_CONTROLLER_CAN_ID = 11;
+    public static final int ELBOW_CONTROLLER_CAN_ID = 12;
+    public static final int WRIST_CONTROLLER_CAN_ID = 13;
+
+    // ROBOT ARM: MOTOR CONTROL
+    public static final double ARM_ENCODER_DEADBAND = 1.0;
+
+    public static final double MIN_SHOULDER_ANGLE = 70;
+    public static final double MAX_SHOULDER_ANGLE = 210;
+
+    public static final double MIN_SHOULDER_SPEED = 1.0; //in degrees/sec
+    public static final double MAX_SHOULDER_SPEED = 30.0; //in degrees/sec
+
+    public static final double SHOULDER_VELOCITY_DIVISOR = 180.0;
+    public static final double SHOULDER_PROPORTIONAL_COEFFICIENT = 0.00025;
+
+    public static final boolean INVERT_SHOULDER_MOTOR = true;
+
+    public static final double MIN_ELBOW_ANGLE = 90;
+    public static final double MAX_ELBOW_ANGLE = 180;
+
+    public static final double MIN_ELBOW_SPEED = 10.0; //in degrees/sec
+    public static final double MAX_ELBOW_SPEED = 50.0; //in degrees/sec
+
+    public static final double ELBOW_VELOCITY_DIVISOR = 180.0;
+    public static final double ELBOW_PROPORTIONAL_COEFFICIENT = 0.00025;
+
+    public static final boolean INVERT_ELBOW_MOTOR = true;
+
+    public static final double MIN_WRIST_ANGLE = 80;
+    public static final double MAX_WRIST_ANGLE = 300;
+
+    public static final double MIN_WRIST_SPEED = 10.0; //in degrees/sec
+    public static final double MAX_WRIST_SPEED = 60.0; //in degrees/sec
+
+    public static final double WRIST_VELOCITY_DIVISOR = 45.0;
+    public static final double WRIST_PROPORTIONAL_COEFFICIENT = 0.00025;
+
+    public static final boolean INVERT_WRIST_MOTOR = false;
+
+    // END EFFECTOR
+    public static final int INTAKE_CONTROLLER_CAN_ID = 15;
+    public static final int HATCH_GRABBER_SOLENOID_PCM_CHANNEL = 1;
+
+    public static final int INTAKE_DIRECTION_INVERT = 1;
+
+    public static final double INTAKE_CONTROLLER_DEADBAND = 0.1;
+
+    // "CLIMB SYSTEM" (lol)
+    public static final int SKID_PLATE_DEPLOY_PCM_CHANNEL = 2;
 
     // SENSORS
     public static final int IMU_CAN_ID = 0;

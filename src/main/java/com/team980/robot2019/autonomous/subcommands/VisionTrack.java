@@ -1,23 +1,25 @@
 package com.team980.robot2019.autonomous.subcommands;
 
-import com.team980.robot2019.sensors.Rioduino;
 import com.team980.robot2019.subsystems.DriveSystem;
+import com.team980.robot2019.vision.VisionDataProvider;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.shuffleboard.EventImportance;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
-import static com.team980.robot2019.Parameters.*;
+import static com.team980.robot2019.Parameters.AUTO_VISION_CORRECTION_DIVISOR;
 
 public final class VisionTrack extends Command {
 
     private DriveSystem driveSystem;
 
-    private Rioduino provider; //TODO replace with interface
+    private VisionDataProvider provider;
 
     private final double followSpeed;
     private final double targetRange;
 
     private boolean isFinished = false;
 
-    public VisionTrack(DriveSystem driveSystem, Rioduino provider, double followSpeed, double targetRange) {
+    public VisionTrack(DriveSystem driveSystem, VisionDataProvider provider, double followSpeed, double targetRange) {
         this.driveSystem = driveSystem;
         this.provider = provider;
 
@@ -27,7 +29,7 @@ public final class VisionTrack extends Command {
 
     @Override
     protected void initialize() {
-        System.out.println("VisionTrack");
+        Shuffleboard.addEventMarker("VisionTrack: provider " + provider.getSource(), EventImportance.kTrivial);
     }
 
     @Override

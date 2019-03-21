@@ -2,6 +2,8 @@ package com.team980.robot2019.autonomous.subcommands;
 
 import com.team980.robot2019.subsystems.DriveSystem;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.shuffleboard.EventImportance;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 import static com.team980.robot2019.Parameters.*;
 
@@ -25,7 +27,7 @@ public final class TiltAwareMove extends Command {
 
     @Override
     protected void initialize() {
-        System.out.println("TiltAwareMove");
+        Shuffleboard.addEventMarker("TiltAwareMove", EventImportance.kTrivial);
 
         driveSystem.resetEncoders();
 
