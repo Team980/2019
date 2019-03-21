@@ -115,7 +115,7 @@ public class RobotArm {
 
                 shoulderMotor.set(Math.copySign(1.0, positionDelta));
 
-                stictionBuffer[2]--;
+                stictionBuffer[0]--;
             } else {
                 var positionDelta = pose.shoulderAngle - shoulderAngle;
                 var desiredVelocity = (positionDelta / SHOULDER_VELOCITY_DIVISOR) * MAX_SHOULDER_SPEED;
@@ -124,12 +124,12 @@ public class RobotArm {
                 if (Math.abs(desiredVelocity) > MAX_SHOULDER_SPEED) desiredVelocity = Math.copySign(MAX_SHOULDER_SPEED, desiredVelocity);
 
                 var velocityDelta = desiredVelocity - shoulderVelocity;
-                voltageBuffer[2] += (velocityDelta * SHOULDER_PROPORTIONAL_COEFFICIENT);
+                voltageBuffer[0] += (velocityDelta * SHOULDER_PROPORTIONAL_COEFFICIENT);
 
-                if (Math.abs(voltageBuffer[2]) > 1.0) voltageBuffer[2] = Math.copySign(1.0, voltageBuffer[2]);
+                if (Math.abs(voltageBuffer[0]) > 1.0) voltageBuffer[2] = Math.copySign(1.0, voltageBuffer[0]);
 
                 if (Math.abs(positionDelta) > ARM_ENCODER_DEADBAND) {
-                    shoulderMotor.set(voltageBuffer[2]);
+                    shoulderMotor.set(voltageBuffer[0]);
                 } else {
                     shoulderMotor.set(0);
                     shoulderState = State.STOPPED;
@@ -145,7 +145,7 @@ public class RobotArm {
 
                 elbowMotor.set(Math.copySign(1.0, positionDelta));
 
-                stictionBuffer[2]--;
+                stictionBuffer[1]--;
             } else {
                 var positionDelta = pose.elbowAngle - elbowAngle;
                 var desiredVelocity = (positionDelta / ELBOW_VELOCITY_DIVISOR) * MAX_ELBOW_SPEED;
@@ -154,12 +154,12 @@ public class RobotArm {
                 if (Math.abs(desiredVelocity) > MAX_ELBOW_SPEED) desiredVelocity = Math.copySign(MAX_ELBOW_SPEED, desiredVelocity);
 
                 var velocityDelta = desiredVelocity - elbowVelocity;
-                voltageBuffer[2] += (velocityDelta * ELBOW_PROPORTIONAL_COEFFICIENT);
+                voltageBuffer[1] += (velocityDelta * ELBOW_PROPORTIONAL_COEFFICIENT);
 
-                if (Math.abs(voltageBuffer[2]) > 1.0) voltageBuffer[2] = Math.copySign(1.0, voltageBuffer[2]);
+                if (Math.abs(voltageBuffer[1]) > 1.0) voltageBuffer[2] = Math.copySign(1.0, voltageBuffer[1]);
 
                 if (Math.abs(positionDelta) > ARM_ENCODER_DEADBAND) {
-                    elbowMotor.set(voltageBuffer[2]);
+                    elbowMotor.set(voltageBuffer[1]);
                 } else {
                     elbowMotor.set(0);
                     elbowState = State.STOPPED;

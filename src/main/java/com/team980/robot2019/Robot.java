@@ -98,6 +98,7 @@ public final class Robot extends TimedRobot {
         //skidPlateDeploySolenoid = new Solenoid(SKID_PLATE_DEPLOY_PCM_CHANNEL);
 
         autonomous = new Autonomous.Builder(driveSystem, ypr, rioduino);
+
         sideChooser = new SendableChooser<>();
         sideChooser.setDefaultOption("Right", Autonomous.Side.RIGHT);
         sideChooser.addOption("Left", Autonomous.Side.LEFT);
