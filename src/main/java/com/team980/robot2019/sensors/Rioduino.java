@@ -74,7 +74,7 @@ public final class Rioduino implements VisionDataProvider {
      * <p>Ranges from zero to 360</p>
      */
     public float getShoulderAngle() {
-        var angle = (shoulderValue * 360 / 4096.0f) - 0; //TODO Recenter zero
+        var angle = (shoulderValue * 360 / 4096.0f) - 0;
         if (angle < 0) angle += 360;
 
         return angle;
@@ -85,7 +85,10 @@ public final class Rioduino implements VisionDataProvider {
      * <p>Ranges from zero to 360</p>
      */
     public float getElbowAngle() {
-        return (elbowValue * 360 / 4096.0f); //TODO do we need to recenter zero?
+        var angle = (elbowValue * 360 / 4096.0f) - 149;
+        if (angle < 0) angle += 360;
+
+        return angle;
     }
 
     /**
@@ -93,8 +96,8 @@ public final class Rioduino implements VisionDataProvider {
      * <p>Ranges from zero to 360</p>
      */
     public float getWristAngle() {
-        var angle = (wristValue * 360 / 4096.0f) + 90; //TODO Recenter zero
-        if (angle > 360) angle -= 360;
+        var angle = (wristValue * 360 / 4096.0f) - 37;
+        if (angle < 0) angle += 360;
 
         return angle;
     }

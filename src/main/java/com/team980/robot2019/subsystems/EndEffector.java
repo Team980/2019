@@ -17,6 +17,7 @@ public class EndEffector {
         intakeMotor.setName("End Effector", "Intake Motor");
 
         hatchGrabberSolenoid = new Solenoid(HATCH_GRABBER_SOLENOID_PCM_CHANNEL);
+        hatchGrabberSolenoid.setName("End Effector", "Hatch Grabber Solenoid");
     }
 
     public void setIntake(IntakeDirection direction, double speed) {

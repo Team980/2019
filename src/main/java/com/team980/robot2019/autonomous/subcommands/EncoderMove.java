@@ -28,6 +28,7 @@ public final class EncoderMove extends Command {
     @Override
     protected void initialize() {
         Shuffleboard.addEventMarker("EncoderMove: " + distance + " feet", EventImportance.kTrivial);
+        System.out.println("EncoderMove: " + distance + "feet");
 
         driveSystem.resetEncoders();
 

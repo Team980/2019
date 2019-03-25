@@ -28,6 +28,7 @@ public final class TiltAwareMove extends Command {
     @Override
     protected void initialize() {
         Shuffleboard.addEventMarker("TiltAwareMove", EventImportance.kTrivial);
+        System.out.println("TiltAwareMove");
 
         driveSystem.resetEncoders();
 

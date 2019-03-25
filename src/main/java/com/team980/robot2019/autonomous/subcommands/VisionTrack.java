@@ -30,6 +30,8 @@ public final class VisionTrack extends Command {
     @Override
     protected void initialize() {
         Shuffleboard.addEventMarker("VisionTrack: provider " + provider.getSource(), EventImportance.kTrivial);
+        System.out.println("VisionTrack: provider " + provider.getSource());
+
     }
 
     @Override

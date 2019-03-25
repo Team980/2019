@@ -35,6 +35,7 @@ public final class TimedMove extends Command {
     @Override
     protected void initialize() {
         Shuffleboard.addEventMarker("TimedMove: " + period + " seconds", EventImportance.kTrivial);
+        System.out.println("TimedMove: " + period + " seconds");
 
         driveSystem.resetEncoders();
 

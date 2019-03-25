@@ -26,6 +26,7 @@ public final class IMUTurn extends Command {
     @Override
     protected void initialize() {
         Shuffleboard.addEventMarker("IMUTurn: " + heading + " degrees", EventImportance.kTrivial);
+        System.out.println("IMUTurn: " + heading + " degrees");
     }
 
     @Override
