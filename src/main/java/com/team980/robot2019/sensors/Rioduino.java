@@ -85,7 +85,7 @@ public final class Rioduino implements VisionDataProvider {
      * <p>Ranges from zero to 360</p>
      */
     public float getElbowAngle() {
-        var angle = (elbowValue * 360 / 4096.0f) - 149;
+        var angle = (elbowValue * 360 / 4096.0f) - 267;
         if (angle < 0) angle += 360;
 
         return angle;
@@ -96,7 +96,7 @@ public final class Rioduino implements VisionDataProvider {
      * <p>Ranges from zero to 360</p>
      */
     public float getWristAngle() {
-        var angle = (wristValue * 360 / 4096.0f) - 37;
+        var angle = (wristValue * 360 / 4096.0f) - 271;
         if (angle < 0) angle += 360;
 
         return angle;
@@ -129,6 +129,15 @@ public final class Rioduino implements VisionDataProvider {
      */
     public double getTargetCenterCoord() {
         return targetCenterCoord;
+    }
+
+    /**
+     * <p>The offset x-coordinate of the detected vision targets</p>
+     * <p>Ranges from -160 to 160, plus offset</p>
+     */
+    @Override
+    public double getTargetCenterOffset() {
+        return targetCenterCoord - 160 + 35;
     }
 
     /**

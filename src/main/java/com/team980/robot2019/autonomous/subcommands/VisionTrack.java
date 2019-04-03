@@ -31,23 +31,21 @@ public final class VisionTrack extends Command {
     protected void initialize() {
         Shuffleboard.addEventMarker("VisionTrack: provider " + provider.getSource(), EventImportance.kTrivial);
         System.out.println("VisionTrack: provider " + provider.getSource());
-
     }
 
     @Override
     protected void execute() {
         if (provider.getTargetWidth() < targetRange) { //this works???
 
-            //TODO ranging?
-            //if (Math.abs(followSpeed) < AUTO_MIN_SPEED) followSpeed = Math.copySign(AUTO_MIN_SPEED, followSpeed);
-            //if (Math.abs(followSpeed) > AUTO_MAX_SPEED) followSpeed = Math.copySign(AUTO_MAX_SPEED, followSpeed);
+            var driveSpeed = 1.0; //in ft/sec
+            var turnSpeed = provider.getTargetCenterOffset() / AUTO_VISION_CORRECTION_DIVISOR;
 
-            var targetCenterOffset = provider.getTargetCenterCoord() - 160 - 25; // Normalize coordinates, account for off center
-            var turnSpeed = targetCenterOffset / AUTO_VISION_CORRECTION_DIVISOR;
+            /*if (provider.getTargetCenterCoord() == -1) {
+                isFinished = true;
+                turnSpeed = 0; // No targets detected
+            }*/
 
-            if (provider.getTargetCenterCoord() == -1) turnSpeed = 0; // No targets detected
-
-            driveSystem.setSetpoints(followSpeed + turnSpeed, followSpeed - turnSpeed);
+            driveSystem.setSetpoints(driveSpeed + turnSpeed, driveSpeed - turnSpeed);
         } else {
             isFinished = true;
         }

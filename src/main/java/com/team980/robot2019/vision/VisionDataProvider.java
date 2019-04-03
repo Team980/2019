@@ -14,6 +14,12 @@ public interface VisionDataProvider {
     double getTargetCenterCoord();
 
     /**
+     * <p>The offset x-coordinate of the detected vision targets</p>
+     * <p>Ranges from -160 to 160</p>
+     */
+    double getTargetCenterOffset();
+
+    /**
      * <p>The combined width of the vision targets, in pixels</p>
      */
     double getTargetWidth();

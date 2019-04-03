@@ -26,7 +26,6 @@ package com.team980.robot2019;
 
 import com.ctre.phoenix.sensors.PigeonIMU;
 import com.team980.robot2019.autonomous.Autonomous;
-import com.team980.robot2019.autonomous.CargoShipAutonomous;
 import com.team980.robot2019.sensors.Rioduino;
 import com.team980.robot2019.subsystems.DriveSystem;
 import com.team980.robot2019.subsystems.EndEffector;
@@ -36,10 +35,10 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.command.Scheduler;
-import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.shuffleboard.EventImportance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import static com.team980.robot2019.Parameters.*;
 
@@ -67,8 +66,9 @@ public final class Robot extends TimedRobot {
 
     private Solenoid skidPlateDeploySolenoid;
 
-    private CargoShipAutonomous.Builder autonomous;
-    private SendableChooser<Autonomous.Side> sideChooser; //TODO choose Class as well!!
+    private Autonomous.Builder autonomous;
+    private SendableChooser<Autonomous.Side> sideChooser;
+    private SendableChooser<Autonomous.Strategy> strategyChooser;
 
     private TeleopScheduler teleopScheduler;
 
@@ -104,9 +104,16 @@ public final class Robot extends TimedRobot {
 
         sideChooser = new SendableChooser<>();
         sideChooser.addOption("Left", Autonomous.Side.LEFT);
-        sideChooser.addOption("Right", Autonomous.Side.RIGHT);
-        sideChooser.setName("Autonomous", "Side Selection");
-        LiveWindow.add(sideChooser);
+        sideChooser.setDefaultOption("Right", Autonomous.Side.RIGHT);
+        sideChooser.setName("Autonomous", "Side");
+        SmartDashboard.putData(sideChooser);
+
+        strategyChooser = new SendableChooser<>();
+        strategyChooser.setDefaultOption("Cargo Ship", Autonomous.Strategy.CARGO_SHIP);
+        strategyChooser.addOption("Cargo Ship + Fetch", Autonomous.Strategy.CARGO_SHIP_PLUS_FETCH);
+        //strategyChooser.addOption("Rocket Hatch", Autonomous.Strategy.TWO_HATCH); TODO do we want to run hatch auto?
+        strategyChooser.setName("Autonomous", "Strategy");
+        SmartDashboard.putData(strategyChooser);
 
         teleopScheduler = new TeleopScheduler();
     }
@@ -126,16 +133,16 @@ public final class Robot extends TimedRobot {
         dataTable.getSubTable("IMU").getEntry("Roll").setNumber(ypr[2]);
 
         dataTable.getSubTable("Vision").getSubTable("Front Camera").getEntry("Target Center Coord").setNumber(rioduino.getTargetCenterCoord());
+        dataTable.getSubTable("Vision").getSubTable("Front Camera").getEntry("Target Center Offset").setNumber(rioduino.getTargetCenterOffset());
         dataTable.getSubTable("Vision").getSubTable("Front Camera").getEntry("Target Width").setNumber(rioduino.getTargetWidth());
 
-        if (sideChooser.getSelected() != null) {
-            dataTable.getSubTable("Autonomous").getEntry("Side").setString(sideChooser.getSelected().name());
-        } else {
-            dataTable.getSubTable("Autonomous").getEntry("Side").setString("NULL");
-        }
+        dataTable.getSubTable("Autonomous").getEntry("Side").setString(sideChooser.getSelected().name());
+        dataTable.getSubTable("Autonomous").getEntry("Strategy").setString(strategyChooser.getSelected().name());
 
         dataTable.getSubTable("Status Flags").getEntry("Tip Protection").setBoolean(tipProtectionEnabled);
         dataTable.getSubTable("Status Flags").getEntry("Auto Target").setBoolean(autoTargetEnabled);
+
+        dataTable.getSubTable("Status Flags").getEntry("Manual Arm Control").setBoolean(operatorBox.getRawButton(1)); //show switch state
 
         robotArm.updateData(dataTable);
     }
@@ -145,7 +152,7 @@ public final class Robot extends TimedRobot {
      */
     @Override
     public void autonomousInit() {
-        Shuffleboard.setRecordingFileNameFormat("LAR_AUTO_${time}");
+        Shuffleboard.setRecordingFileNameFormat("LAR_AUTO_${time}"); //TODO Why is this not working?
         Shuffleboard.startRecording();
 
         imu.setYaw(0, 0);
@@ -162,13 +169,7 @@ public final class Robot extends TimedRobot {
 
         endEffector.setHatchGrabberExtended(false);
 
-        Autonomous.Side side;
-        if (sideChooser.getSelected() != null) {
-            side = sideChooser.getSelected();
-        } else {
-            side = Autonomous.Side.RIGHT;
-        }
-        autonomous.buildCargoShip(Autonomous.Side.RIGHT).start(); //TODO don't hardcode these choices!
+        autonomous.build(sideChooser.getSelected(), strategyChooser.getSelected()).start();
     }
 
     /**
@@ -195,7 +196,7 @@ public final class Robot extends TimedRobot {
      */
     @Override
     public void teleopInit() {
-        Shuffleboard.setRecordingFileNameFormat("LAR_TELEOP_${time}");
+        Shuffleboard.setRecordingFileNameFormat("LAR_TELEOP_${time}"); //TODO why does this not work
         Shuffleboard.startRecording();
 
         driveSystem.resetEncoders();
@@ -253,24 +254,31 @@ public final class Robot extends TimedRobot {
         // Robot drive - handles all override moves
         if (tipProtectionEnabled) { // Tipping protection overrides driver input
             autoTargetEnabled = false;
-            driveSystem.arcadeDrive(Math.copySign(0.4, ypr[1]), 0);
+            driveSystem.setSetpoints(Math.copySign(3.0, ypr[1]), Math.copySign(3.0, ypr[1])); //TODO tune this if we need it
         } else if (autoTargetEnabled) {
-            var targetCenterOffset = rioduino.getTargetCenterCoord() - 160 - 25; // Normalize coordinates, account for off center
-            var turnSpeed = targetCenterOffset / AUTO_VISION_CORRECTION_DIVISOR;
+            var driveSpeed = 1.0; //in ft/sec - TODO parameterize?
+            var turnSpeed = rioduino.getTargetCenterOffset() / AUTO_VISION_CORRECTION_DIVISOR;
 
             if (rioduino.getTargetCenterCoord() == -1) {
                 autoTargetEnabled = false;
                 turnSpeed = 0; // No targets detected
             }
 
-            if (Math.abs(targetCenterOffset) < 2.0) {
+            if (Math.abs(rioduino.getTargetWidth()) >= AUTO_LOADING_STATION_TARGET_SCORING_WIDTH) {
                 autoTargetEnabled = false;
                 turnSpeed = 0; // Target locked
             }
 
-            driveSystem.setSetpoints(turnSpeed, -turnSpeed);
+            driveSystem.setSetpoints(driveSpeed + turnSpeed, driveSpeed - turnSpeed);
         } else {
-            driveSystem.arcadeDrive(-driveStick.getY(), driveWheel.getX());
+            driveSystem.arcadeDrive(-driveStick.getY(), driveWheel.getX(), true);
+        }
+
+        // Auto target activation
+        if (driveStick.getRawButton(10)) {
+            autoTargetEnabled = true;
+        } else {
+            autoTargetEnabled = false;
         }
 
         // Tip protection activation
@@ -294,13 +302,18 @@ public final class Robot extends TimedRobot {
             robotArm.manualControl(0, xboxController.getY(GenericHID.Hand.kLeft),
                     xboxController.getY(GenericHID.Hand.kRight));
         } else {
-            robotArm.fineWristControl(xboxController.getY(GenericHID.Hand.kLeft) * 0.25); //TODO store as constant?
+            robotArm.fineWristControl(xboxController.getY(GenericHID.Hand.kLeft) * FINE_WRIST_CONTROL_COEFFICIENT);
             robotArm.automatedControl();
+        }
+
+        // Stop arm control with red button
+        if (operatorBox.getRawButtonPressed(4)) {
+            robotArm.disable();
         }
 
         // Arm poses
         if (xboxController.getStickButtonPressed(GenericHID.Hand.kRight)) {
-            robotArm.setPose(RobotArm.Pose.STOWED_CARGO_PRELOAD); //STOWED
+            robotArm.setPose(RobotArm.Pose.STOWED);
 
         } else if (xboxController.getAButtonPressed()) {
             robotArm.setPose(RobotArm.Pose.LOW_ROCKET_HATCH);
@@ -317,14 +330,11 @@ public final class Robot extends TimedRobot {
         } else if (xboxController.getPOV() == 90) { //Right on d-pad
             robotArm.setPose(RobotArm.Pose.MID_ROCKET_CARGO);
 
-        /*} else if (xboxController.getPOV() == 270) { //Left on d-pad
-            robotArm.setPose(RobotArm.Pose.FLOOR_CARGO_PICKUP);*/
-
-        } else if (xboxController.getPOV() == 0) { //Up on d-pad
+        } else if (xboxController.getPOV() == 270) { //Left on d-pad
             robotArm.setPose(RobotArm.Pose.CARGO_SHIP_CARGO);
 
-        } else if ((xboxController.getPOV() == 270)) { // TODO move when elbow is fixed
-            robotArm.setPose(RobotArm.Pose.LOADING_STATION_CARGO);
+        }  else if (xboxController.getStartButtonPressed()) {
+            robotArm.setPose(RobotArm.Pose.FLOOR_CARGO_PICKUP);
 
         }
 
@@ -370,5 +380,18 @@ public final class Robot extends TimedRobot {
 
         Shuffleboard.stopRecording();
         Shuffleboard.clearRecordingFileNameFormat();
+    }
+
+    /**
+     * Test mode - used so we don't interfere with competition controls / timings
+     */
+    @Override
+    public void testInit() {
+
+    }
+
+    @Override
+    public void testPeriodic() {
+
     }
 }

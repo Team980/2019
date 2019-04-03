@@ -51,7 +51,7 @@ public final class Parameters {
     public static final double AUTO_LOADING_STATION_TARGET_SCORING_WIDTH = 200;
     public static final double AUTO_ROCKET_TARGET_SCORING_WIDTH = 200;
 
-    public static final double AUTO_VISION_CORRECTION_DIVISOR = 80;
+    public static final double AUTO_VISION_CORRECTION_DIVISOR = 120;
 
     // DRIVE SYSTEM: SPEED CONTROLLERS
     public static final int LEFT_TOP_DRIVE_CONTROLLER_CAN_ID = 0;
@@ -88,15 +88,8 @@ public final class Parameters {
     public static final double DRIVE_PID_TOLERANCE = 0.01;
 
     // DRIVE SYSTEM: INPUT MODIFIERS
-    public static final double DRIVE_STICK_DEADBAND = 0.05;
-    public static final double DRIVE_STICK_SHIFT_POINT = 0.5;
-
-    public static final double LOW_GEAR_DRIVE_STICK_COEFFICIENT = 8.5;
-    public static final double HIGH_GEAR_DRIVE_STICK_COEFFICIENT = 25.5;
-    public static final double HIGH_GEAR_DRIVE_STICK_OFFSET = 8.5;
-
+    public static final double DRIVE_STICK_DEADBAND = 0.1;
     public static final double DRIVE_WHEEL_DEADBAND = 0.05;
-    public static final double DRIVE_WHEEL_COEFFICIENT = 0.30;
 
     // DRIVE SYSTEM: SHIFTERS
     public static final int SHIFTER_SOLENOID_PCM_CHANNEL = 0;
@@ -124,12 +117,12 @@ public final class Parameters {
     public static final boolean INVERT_SHOULDER_MOTOR = true;
 
     public static final double MIN_ELBOW_ANGLE = 25;
-    public static final double MAX_ELBOW_ANGLE = 130;
+    public static final double MAX_ELBOW_ANGLE = 140;
 
-    public static final double MIN_ELBOW_SPEED = 15.0; //in degrees/sec
-    public static final double MAX_ELBOW_SPEED = 70.0; //in degrees/sec
+    public static final double MIN_ELBOW_SPEED = 25.0; //in degrees/sec
+    public static final double MAX_ELBOW_SPEED = 60.0; //in degrees/sec
 
-    public static final double ELBOW_VELOCITY_DIVISOR = 180.0;
+    public static final double ELBOW_VELOCITY_DIVISOR = 90.0;
     public static final double ELBOW_PROPORTIONAL_COEFFICIENT = 0.00025;
 
     public static final boolean INVERT_ELBOW_MOTOR = true;
@@ -144,6 +137,8 @@ public final class Parameters {
     public static final double WRIST_PROPORTIONAL_COEFFICIENT = 0.00025;
 
     public static final boolean INVERT_WRIST_MOTOR = false;
+
+    public static final double FINE_WRIST_CONTROL_COEFFICIENT = 0.25;
 
     // END EFFECTOR
     public static final int INTAKE_CONTROLLER_CAN_ID = 15;

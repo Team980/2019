@@ -2,12 +2,15 @@ package com.team980.robot2019.subsystems;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 
 import static com.team980.robot2019.Parameters.*;
 
 /**
  * Implements velocity control for our West Coast drive system.
+ * <p>
+ * Note: Much of the non-PID control logic is ported from the {@link DifferentialDrive} class
  */
 public final class DriveSystem {
 
@@ -49,6 +52,7 @@ public final class DriveSystem {
         rightEncoder = new Encoder(RIGHT_DRIVE_ENCODER_CHANNEL_A, RIGHT_DRIVE_ENCODER_CHANNEL_B, INVERT_RIGHT_DRIVE_ENCODER, CounterBase.EncodingType.k4X);
         rightEncoder.setDistancePerPulse((TAU * (WHEEL_RADIUS / 12)) / DRIVE_ENCODER_PULSES_PER_REVOLUTION);
         rightEncoder.setPIDSourceType(PIDSourceType.kRate);
+        //TODO make sure I don't need to reverse this - just to be safe
         rightEncoder.setName("Drive System", "Right Encoder");
 
         rightController = new PIDController(LOW_GEAR_PROPORTIONAL_COEFFICIENT, LOW_GEAR_INTEGRAL_COEFFICIENT, LOW_GEAR_DERIVATIVE_COEFFICIENT, LOW_GEAR_FEEDFORWARD_TERM, rightEncoder, rightDrive);
@@ -100,7 +104,7 @@ public final class DriveSystem {
     }
 
     /**
-     * Separated so it can run in both auto and teleop
+     * Separated so it can run in all control modes
      */
     private void runAutoShift() {
         if (isAutoShiftEnabled) {
@@ -130,50 +134,124 @@ public final class DriveSystem {
     }
 
     /**
-     * @param left  Requested left command, from -1 to 1
-     * @param right Requested right command, from -1 to 1
+     * @param left         Requested left drive command, from -1 to 1
+     * @param right        Requested right drive command, from -1 to 1
+     * @param squareInputs If set, decreases the input sensitivity at low speeds.
      */
-    public void tankDrive(double left, double right) {
-        if (Math.abs(left) < DRIVE_STICK_DEADBAND) left = 0;
-        if (Math.abs(right) < DRIVE_STICK_DEADBAND) right = 0;
+    public void tankDrive(double left, double right, boolean squareInputs) {
+        left = limit(left);
+        left = applyDeadband(left, DRIVE_STICK_DEADBAND);
+
+        right = limit(right);
+        right = applyDeadband(right, DRIVE_STICK_DEADBAND);
+
+        if (squareInputs) {
+            left = Math.copySign(left * left, left);
+            right = Math.copySign(right * right, right);
+        }
 
         if (isPIDEnabled()) {
-            if (Math.abs(left) > DRIVE_STICK_SHIFT_POINT) {
-                left = (left * HIGH_GEAR_DRIVE_STICK_COEFFICIENT) - HIGH_GEAR_DRIVE_STICK_OFFSET;
-            } else {
-                left *= LOW_GEAR_DRIVE_STICK_COEFFICIENT;
-            }
-
-            if (Math.abs(right) > DRIVE_STICK_SHIFT_POINT) {
-                right = (right * HIGH_GEAR_DRIVE_STICK_COEFFICIENT) - HIGH_GEAR_DRIVE_STICK_OFFSET;
-            } else {
-                right *= LOW_GEAR_DRIVE_STICK_COEFFICIENT;
-            }
-
-            setSetpoints(left, right);
+            leftController.setSetpoint(left * MAX_DRIVE_SPEED);
+            rightController.setSetpoint(right * MAX_DRIVE_SPEED);
         } else {
             leftDrive.set(left);
             rightDrive.set(right);
-
-            runAutoShift();
         }
+
+        runAutoShift();
     }
 
     /**
-     * @param move Requested move command, from -1 to 1
-     * @param turn Requested turn command, from -1 to 1
+     * @param move         Requested move command, from -1 to 1
+     * @param turn         Requested turn command, from -1 to 1
+     * @param squareInputs If set, decreases the input sensitivity at low speeds.
      */
-    public void arcadeDrive(double move, double turn) {
-        if (Math.abs(move) < DRIVE_STICK_DEADBAND) move = 0;
-        if (Math.abs(turn) < DRIVE_WHEEL_DEADBAND) turn = 0;
+    public void arcadeDrive(double move, double turn, boolean squareInputs) {
+        move = limit(move);
+        move = applyDeadband(move, DRIVE_STICK_DEADBAND);
 
-        turn *= DRIVE_WHEEL_COEFFICIENT;
+        turn = limit(turn);
+        turn = applyDeadband(turn, DRIVE_WHEEL_DEADBAND);
 
-        tankDrive(move + turn, move - turn);
+        if (squareInputs) {
+            move = Math.copySign(move * move, move);
+            turn = Math.copySign(turn * turn, turn);
+        }
+
+        double left;
+        double right;
+
+        var maxInput = Math.copySign(Math.max(Math.abs(move), Math.abs(turn)), move);
+
+        if (move >= 0.0) {
+            // First quadrant, else second quadrant
+            if (turn >= 0.0) {
+                left = maxInput;
+                right = move - turn;
+            } else {
+                left = move + turn;
+                right = maxInput;
+            }
+        } else {
+            // Third quadrant, else fourth quadrant
+            if (turn >= 0.0) {
+                left = move + turn;
+                right = maxInput;
+            } else {
+                left = maxInput;
+                right = move - turn;
+            }
+        }
+
+        if (isPIDEnabled()) {
+            leftController.setSetpoint(left * MAX_DRIVE_SPEED);
+            rightController.setSetpoint(right * MAX_DRIVE_SPEED);
+        } else {
+            leftDrive.set(left);
+            rightDrive.set(right);
+        }
+
+        runAutoShift();
+    }
+
+    /**
+     * Limit motor values to the -1.0 to +1.0 range.
+     */
+    private double limit(double value) {
+        if (value > 1.0) {
+            return 1.0;
+        }
+        if (value < -1.0) {
+            return -1.0;
+        }
+        return value;
+    }
+
+    /**
+     * Returns 0.0 if the given value is within the specified range around zero. The remaining range
+     * between the deadband and 1.0 is scaled from 0.0 to 1.0.
+     *
+     * @param value    value to clip
+     * @param deadband range around zero
+     */
+    private double applyDeadband(double value, double deadband) {
+        if (Math.abs(value) > deadband) {
+            if (value > 0.0) {
+                return (value - deadband) / (1.0 - deadband);
+            } else {
+                return (value + deadband) / (1.0 - deadband);
+            }
+        } else {
+            return 0.0;
+        }
     }
 
     public void disable() {
+        setSetpoints(0, 0);
         setPIDEnabled(false);
+
+        leftController.reset();
+        rightController.reset();
 
         leftDrive.stopMotor();
         rightDrive.stopMotor();

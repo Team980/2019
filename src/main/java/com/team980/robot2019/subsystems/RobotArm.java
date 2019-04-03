@@ -131,8 +131,16 @@ public class RobotArm {
 
         // Fetch angular joint velocities
         var shoulderVelocity = rioduino.getShoulderVelocity();
+
         var elbowVelocity = rioduino.getElbowVelocity();
+        if (Math.abs(elbowVelocity) > MAX_ELBOW_SPEED) { // We travel through the zero point - fix that
+            elbowVelocity = (float) Math.copySign(MAX_ELBOW_SPEED, elbowVelocity);
+        }
+
         var wristVelocity = rioduino.getWristVelocity();
+        if (Math.abs(wristVelocity) > MAX_WRIST_SPEED) {
+            wristVelocity = (float) Math.copySign(MAX_WRIST_SPEED, wristVelocity);
+        }
 
         // Deactivate automated control if we exit our bounds
         if (securityEnabled) {
@@ -165,7 +173,7 @@ public class RobotArm {
                 var velocityDelta = desiredVelocity - shoulderVelocity;
                 voltageBuffer[0] += (velocityDelta * SHOULDER_PROPORTIONAL_COEFFICIENT);
 
-                if (Math.abs(voltageBuffer[0]) > 1.0) voltageBuffer[2] = Math.copySign(1.0, voltageBuffer[0]);
+                if (Math.abs(voltageBuffer[0]) > 1.0) voltageBuffer[0] = Math.copySign(1.0, voltageBuffer[0]);
 
                 if (Math.abs(positionDelta) > ARM_ENCODER_DEADBAND) {
                     shoulderMotor.set(voltageBuffer[0]);
@@ -190,7 +198,7 @@ public class RobotArm {
             var velocityDelta = desiredVelocity - elbowVelocity;
             voltageBuffer[1] += (velocityDelta * ELBOW_PROPORTIONAL_COEFFICIENT);
 
-            if (Math.abs(voltageBuffer[1]) > 1.0) voltageBuffer[2] = Math.copySign(1.0, voltageBuffer[1]);
+            if (Math.abs(voltageBuffer[1]) > 1.0) voltageBuffer[1] = Math.copySign(1.0, voltageBuffer[1]);
 
             if (Math.abs(positionDelta) > ARM_ENCODER_DEADBAND) {
                 elbowMotor.set(voltageBuffer[1]);
@@ -261,21 +269,18 @@ public class RobotArm {
     }
 
     public enum Pose {
-        STOWED(-1, 34, 302), //TODO hatch?
-        STOWED_CARGO_PRELOAD(-1, 42, 310),
+        STOWED(-1, 42, 310),
 
-        MID_ROCKET_HATCH(-1, 48, 224),
-        MID_ROCKET_CARGO(-1, 38, 151),
+        MID_ROCKET_HATCH(-1, 48, 234),
+        MID_ROCKET_CARGO(-1, 41, 160),
 
-        LOW_ROCKET_HATCH(-1, 113, 290),
+        LOW_ROCKET_HATCH(-1, 116, 299),
         LOW_ROCKET_CARGO(-1, 75, 136),
 
         FLOOR_HATCH_PICKUP(-1, 127, 217),
         FLOOR_CARGO_PICKUP(-1, 104, 119),
 
-        CARGO_SHIP_CARGO(-1, 38, 85),
-
-        LOADING_STATION_CARGO(-1, 38, 115);
+        CARGO_SHIP_CARGO(-1, 42, 107);
 
         double shoulderAngle;
         double elbowAngle;

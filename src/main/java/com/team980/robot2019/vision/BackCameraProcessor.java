@@ -8,6 +8,7 @@ import java.util.List;
 /**
  * Implements VisionDataProvider to calculate and provide data from the back Pixy.
  */
+@Deprecated //We're probably not going to use the rear camera this season.
 public class BackCameraProcessor implements VisionDataProvider {
 
     private static final int VISION_TARGET_SIGNATURE = 1;
@@ -77,10 +78,17 @@ public class BackCameraProcessor implements VisionDataProvider {
         return "roboRIO-API";
     }
 
+    @Override
     public double getTargetCenterCoord() {
         return targetCenterCoord;
     }
 
+    @Override
+    public double getTargetCenterOffset() {
+        return targetCenterCoord - 160 - 25; //Configure if we resurrect back pixy
+    }
+
+    @Override
     public double getTargetWidth() {
         return targetWidth;
     }
