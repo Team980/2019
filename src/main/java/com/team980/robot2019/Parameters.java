@@ -91,6 +91,8 @@ public final class Parameters {
     public static final double DRIVE_STICK_DEADBAND = 0.1;
     public static final double DRIVE_WHEEL_DEADBAND = 0.05;
 
+    public static final double DRIVE_WHEEL_COEFFICIENT = 0.75;
+
     // DRIVE SYSTEM: SHIFTERS
     public static final int SHIFTER_SOLENOID_PCM_CHANNEL = 0;
 
@@ -122,7 +124,7 @@ public final class Parameters {
     public static final double MIN_ELBOW_SPEED = 25.0; //in degrees/sec
     public static final double MAX_ELBOW_SPEED = 60.0; //in degrees/sec
 
-    public static final double ELBOW_VELOCITY_DIVISOR = 90.0;
+    public static final double ELBOW_VELOCITY_DIVISOR = 180.0;
     public static final double ELBOW_PROPORTIONAL_COEFFICIENT = 0.00025;
 
     public static final boolean INVERT_ELBOW_MOTOR = true;
@@ -130,10 +132,10 @@ public final class Parameters {
     public static final double MIN_WRIST_ANGLE = 80;
     public static final double MAX_WRIST_ANGLE = 320;
 
-    public static final double MIN_WRIST_SPEED = 15.0; //in degrees/sec
+    public static final double MIN_WRIST_SPEED = 20.0; //in degrees/sec
     public static final double MAX_WRIST_SPEED = 60.0; //in degrees/sec
 
-    public static final double WRIST_VELOCITY_DIVISOR = 45.0;
+    public static final double WRIST_VELOCITY_DIVISOR = 115.0;
     public static final double WRIST_PROPORTIONAL_COEFFICIENT = 0.00025;
 
     public static final boolean INVERT_WRIST_MOTOR = false;

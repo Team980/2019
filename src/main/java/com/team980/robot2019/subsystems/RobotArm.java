@@ -82,13 +82,17 @@ public class RobotArm {
     }
 
     public void setPose(Pose pose) {
+        if (this.pose == pose) {
+            return;
+        }
+
         stictionBuffer = new int[]{0, 0}; //TODO configure stiction buffer, remove for elbow
         voltageBuffer = new double[]{0, 0, 0};
 
         this.pose = pose;
 
         //shoulderState = State.MOVING_TO_POSITION;
-        elbowState = State.MOVING_TO_POSITION;
+        //elbowState = State.MOVING_TO_POSITION;
         wristState = State.MOVING_TO_POSITION;
 
         Shuffleboard.addEventMarker("Pose set: " + pose.name(), EventImportance.kNormal);
@@ -102,11 +106,11 @@ public class RobotArm {
             shoulderMotor.set(0);
         }*/
 
-        if (Math.abs(elbowCmd) > 0.2) {
+        /*if (Math.abs(elbowCmd) > 0.2) {
             elbowMotor.set(elbowCmd);
         } else {
             elbowMotor.set(0);
-        }
+        }*/
 
         if (Math.abs(wristCmd) > 0.2) {
             wristMotor.set(wristCmd);
@@ -115,6 +119,7 @@ public class RobotArm {
         }
     }
 
+    @Deprecated
     public void fineWristControl(double wristCmd) {
         if (Math.abs(wristCmd) > 0.05) {
             wristState = State.STOPPED;
@@ -186,7 +191,7 @@ public class RobotArm {
             shoulderMotor.set(0);
         }*/
 
-        if (elbowState == State.MOVING_TO_POSITION) {
+        /*if (elbowState == State.MOVING_TO_POSITION) {
             var positionDelta = pose.elbowAngle - elbowAngle;
             var desiredVelocity = (positionDelta / ELBOW_VELOCITY_DIVISOR) * MAX_ELBOW_SPEED;
 
@@ -208,7 +213,7 @@ public class RobotArm {
             }
         } else {
             elbowMotor.set(0);
-        }
+        }*/
 
         if (wristState == State.MOVING_TO_POSITION) {
             var positionDelta = pose.wristAngle - wristAngle;
@@ -234,13 +239,13 @@ public class RobotArm {
             wristMotor.set(0);
         }
 
-        /*if (wristState == State.MOVING_TO_POSITION) { Old voltage control
-            var differential = wristAngle - pose.wristAngle;
+        /*if (wristState == State.MOVING_TO_POSITION) { //Old voltage control
+            var differential = pose.wristAngle - wristAngle;
 
-            var voltage = (differential / 45) * 0.4;
+            var voltage = (differential / 45) * 0.35;
 
-            if (Math.abs(voltage) < 0.2) voltage = Math.copySign(0.2, voltage);
-            if (Math.abs(voltage) < 0.4) voltage = Math.copySign(0.4, voltage);
+            if (Math.abs(voltage) < 0.15) voltage = Math.copySign(0.15, voltage);
+            if (Math.abs(voltage) > 0.35) voltage = Math.copySign(0.35, voltage);
 
             if (Math.abs(differential) > ARM_ENCODER_DEADBAND) {
                 wristMotor.set(voltage);
@@ -269,18 +274,19 @@ public class RobotArm {
     }
 
     public enum Pose {
-        STOWED(-1, 42, 310),
+        STOWED(-1, 42, 310), //physical angle 221
+        ATTACK(-1, 39, 245),
 
-        MID_ROCKET_HATCH(-1, 48, 234),
+        MID_ROCKET_HATCH(-1, 47, 222),
         MID_ROCKET_CARGO(-1, 41, 160),
 
-        LOW_ROCKET_HATCH(-1, 116, 299),
+        LOW_ROCKET_HATCH(-1, 111, 294),
         LOW_ROCKET_CARGO(-1, 75, 136),
 
         FLOOR_HATCH_PICKUP(-1, 127, 217),
-        FLOOR_CARGO_PICKUP(-1, 104, 119),
+        FLOOR_CARGO_PICKUP(-1, 95, 119),
 
-        CARGO_SHIP_CARGO(-1, 42, 107);
+        CARGO_SHIP_CARGO(-1, 42, 127);
 
         double shoulderAngle;
         double elbowAngle;

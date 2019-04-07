@@ -26,10 +26,20 @@ public final class DriveSystem {
 
     private boolean isAutoShiftEnabled = false;
 
+    // Mildly annoying hack
+    private WPI_TalonSRX[] motorArray = new WPI_TalonSRX[6];
+
     public DriveSystem() {
         var leftTopMotor = new WPI_TalonSRX(LEFT_TOP_DRIVE_CONTROLLER_CAN_ID);
         leftTopMotor.setInverted(true);
-        leftDrive = new SpeedControllerGroup(leftTopMotor, new WPI_TalonSRX(LEFT_FRONT_DRIVE_CONTROLLER_CAN_ID), new WPI_TalonSRX(LEFT_BACK_DRIVE_CONTROLLER_CAN_ID));
+        var leftFrontMotor = new WPI_TalonSRX(LEFT_FRONT_DRIVE_CONTROLLER_CAN_ID);
+        var leftBackMotor = new WPI_TalonSRX(LEFT_BACK_DRIVE_CONTROLLER_CAN_ID);
+
+        motorArray[0] = leftTopMotor;
+        motorArray[1] = leftFrontMotor;
+        motorArray[2] = leftBackMotor;
+
+        leftDrive = new SpeedControllerGroup(leftTopMotor, leftFrontMotor, leftBackMotor);
         leftDrive.setName("Drive System", "Left Speed Controllers");
 
         leftEncoder = new Encoder(LEFT_DRIVE_ENCODER_CHANNEL_A, LEFT_DRIVE_ENCODER_CHANNEL_B, INVERT_LEFT_DRIVE_ENCODER, CounterBase.EncodingType.k4X);
@@ -45,7 +55,14 @@ public final class DriveSystem {
 
         var rightTopMotor = new WPI_TalonSRX(RIGHT_TOP_DRIVE_CONTROLLER_CAN_ID);
         rightTopMotor.setInverted(true);
-        rightDrive = new SpeedControllerGroup(rightTopMotor, new WPI_TalonSRX(RIGHT_FRONT_DRIVE_CONTROLLER_CAN_ID), new WPI_TalonSRX(RIGHT_BACK_DRIVE_CONTROLLER_CAN_ID));
+        var rightFrontMotor = new WPI_TalonSRX(RIGHT_FRONT_DRIVE_CONTROLLER_CAN_ID);
+        var rightBackMotor = new WPI_TalonSRX(RIGHT_BACK_DRIVE_CONTROLLER_CAN_ID);
+
+        motorArray[3] = rightTopMotor;
+        motorArray[4] = rightFrontMotor;
+        motorArray[5] = rightBackMotor;
+
+        rightDrive = new SpeedControllerGroup(rightTopMotor, rightFrontMotor, rightBackMotor);
         rightDrive.setInverted(true);
         rightDrive.setName("Drive System", "Right Speed Controllers");
 
@@ -103,6 +120,12 @@ public final class DriveSystem {
         this.isAutoShiftEnabled = isAutoShiftEnabled;
     }
 
+    public void setMotorSafetyEnabled(boolean isMotorSafetyEnabled) {
+        for (WPI_TalonSRX motor : motorArray) {
+            motor.setSafetyEnabled(isMotorSafetyEnabled);
+        }
+    }
+
     /**
      * Separated so it can run in all control modes
      */
@@ -139,10 +162,10 @@ public final class DriveSystem {
      * @param squareInputs If set, decreases the input sensitivity at low speeds.
      */
     public void tankDrive(double left, double right, boolean squareInputs) {
-        left = limit(left);
+        //left = limit(left);
         left = applyDeadband(left, DRIVE_STICK_DEADBAND);
 
-        right = limit(right);
+        //right = limit(right);
         right = applyDeadband(right, DRIVE_STICK_DEADBAND);
 
         if (squareInputs) {
@@ -167,10 +190,10 @@ public final class DriveSystem {
      * @param squareInputs If set, decreases the input sensitivity at low speeds.
      */
     public void arcadeDrive(double move, double turn, boolean squareInputs) {
-        move = limit(move);
+        //move = limit(move);
         move = applyDeadband(move, DRIVE_STICK_DEADBAND);
 
-        turn = limit(turn);
+        //turn = limit(turn);
         turn = applyDeadband(turn, DRIVE_WHEEL_DEADBAND);
 
         if (squareInputs) {

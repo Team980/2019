@@ -23,13 +23,13 @@ public final class CargoShipPlusFetchAutonomous extends CommandGroup {
         // Back up away from cargo bay
         addSequential(new EncoderMove(driveSystem, ypr, -1.0));
 
-        // Turn towards hab
-        addSequential(new IMUTurn(driveSystem, ypr, 210.0 * side.invert));
+        // Turn towards zero
+        addSequential(new IMUTurn(driveSystem, ypr, 0));
 
-        // Move arm to grab hatch
+        // Move arm to stowed
         addSequential(new InstantCommand(() -> {
             robotArm.setSecurityEnabled(true);
-            robotArm.setPose(RobotArm.Pose.LOW_ROCKET_HATCH);
+            robotArm.setPose(RobotArm.Pose.STOWED);
         }));
 
         // Move to line up with loading station

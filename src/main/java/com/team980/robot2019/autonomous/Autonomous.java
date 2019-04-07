@@ -2,6 +2,7 @@ package com.team980.robot2019.autonomous;
 
 import com.team980.robot2019.autonomous.strategies.CargoShipAutonomous;
 import com.team980.robot2019.autonomous.strategies.CargoShipPlusFetchAutonomous;
+import com.team980.robot2019.autonomous.strategies.LaunchOnlyAutonomous;
 import com.team980.robot2019.autonomous.strategies.RocketHatchAutonomous;
 import com.team980.robot2019.sensors.Rioduino;
 import com.team980.robot2019.subsystems.DriveSystem;
@@ -24,6 +25,7 @@ public abstract class Autonomous {
 
     public enum Strategy {
         TWO_HATCH,
+        LAUNCH_ONLY,
         CARGO_SHIP,
         CARGO_SHIP_PLUS_FETCH
     }
@@ -48,6 +50,8 @@ public abstract class Autonomous {
             switch (strategy) {
                 case TWO_HATCH:
                     return new RocketHatchAutonomous(driveSystem, robotArm, ypr, rioduino, side);
+                case LAUNCH_ONLY:
+                    return new LaunchOnlyAutonomous(driveSystem, ypr);
                 case CARGO_SHIP:
                     return new CargoShipAutonomous(driveSystem, robotArm, endEffector, ypr, rioduino, side);
                 case CARGO_SHIP_PLUS_FETCH:

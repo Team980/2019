@@ -35,7 +35,6 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.command.Scheduler;
-import edu.wpi.first.wpilibj.shuffleboard.EventImportance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -74,6 +73,7 @@ public final class Robot extends TimedRobot {
 
     private boolean tipProtectionEnabled = false;
     private boolean autoTargetEnabled = false;
+    private boolean nitroBoostEnabled = false;
 
     /**
      * Robot-wide initialization code goes here.
@@ -81,7 +81,14 @@ public final class Robot extends TimedRobot {
      */
     @Override
     public void robotInit() {
+        Shuffleboard.setRecordingFileNameFormat("AVR_MATCH_${time}"); //TODO Why is this not working?
+        Shuffleboard.startRecording();
+
         dataTable = NetworkTableInstance.getDefault().getTable("Data"); //Custom data table for read-only sensor data
+
+        PowerDistributionPanel pdp = new PowerDistributionPanel();
+        pdp.clearStickyFaults();
+        pdp.resetTotalEnergy();
 
         driveStick = new Joystick(DRIVE_STICK_ID);
         driveWheel = new Joystick(DRIVE_WHEEL_ID);
@@ -109,6 +116,7 @@ public final class Robot extends TimedRobot {
         SmartDashboard.putData(sideChooser);
 
         strategyChooser = new SendableChooser<>();
+        strategyChooser.addOption("Launch Only", Autonomous.Strategy.LAUNCH_ONLY);
         strategyChooser.setDefaultOption("Cargo Ship", Autonomous.Strategy.CARGO_SHIP);
         strategyChooser.addOption("Cargo Ship + Fetch", Autonomous.Strategy.CARGO_SHIP_PLUS_FETCH);
         //strategyChooser.addOption("Rocket Hatch", Autonomous.Strategy.TWO_HATCH); TODO do we want to run hatch auto?
@@ -139,8 +147,13 @@ public final class Robot extends TimedRobot {
         dataTable.getSubTable("Autonomous").getEntry("Side").setString(sideChooser.getSelected().name());
         dataTable.getSubTable("Autonomous").getEntry("Strategy").setString(strategyChooser.getSelected().name());
 
+        dataTable.getSubTable("Status Flags").getEntry("Gear").setString(driveSystem.getGear().name());
+
+        dataTable.getSubTable("Status Flags").getEntry("PID Control").setBoolean(driveSystem.isPIDEnabled());
+
         dataTable.getSubTable("Status Flags").getEntry("Tip Protection").setBoolean(tipProtectionEnabled);
         dataTable.getSubTable("Status Flags").getEntry("Auto Target").setBoolean(autoTargetEnabled);
+        dataTable.getSubTable("Status Flags").getEntry("Nitro Boost").setBoolean(nitroBoostEnabled);
 
         dataTable.getSubTable("Status Flags").getEntry("Manual Arm Control").setBoolean(operatorBox.getRawButton(1)); //show switch state
 
@@ -152,9 +165,6 @@ public final class Robot extends TimedRobot {
      */
     @Override
     public void autonomousInit() {
-        Shuffleboard.setRecordingFileNameFormat("LAR_AUTO_${time}"); //TODO Why is this not working?
-        Shuffleboard.startRecording();
-
         imu.setYaw(0, 0);
 
         driveSystem.setGear(DriveSystem.Gear.HIGH);
@@ -167,7 +177,7 @@ public final class Robot extends TimedRobot {
 
         robotArm.initialize();
 
-        endEffector.setHatchGrabberExtended(false);
+        //endEffector.setHatchGrabberExtended(false);
 
         autonomous.build(sideChooser.getSelected(), strategyChooser.getSelected()).start();
     }
@@ -196,9 +206,6 @@ public final class Robot extends TimedRobot {
      */
     @Override
     public void teleopInit() {
-        Shuffleboard.setRecordingFileNameFormat("LAR_TELEOP_${time}"); //TODO why does this not work
-        Shuffleboard.startRecording();
-
         driveSystem.resetEncoders();
 
         driveSystem.setGear(DriveSystem.Gear.LOW);
@@ -238,24 +245,46 @@ public final class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic() {
 
-        // Auto shifting
-        if (operatorBox.getRawButton(2) || operatorBox.getRawButton(3)) { //Manual shifting lock - tri-state switch
-            if (operatorBox.getRawButton(2) && driveSystem.getGear() == DriveSystem.Gear.LOW) {
-                driveSystem.setAutoShiftEnabled(false);
-                driveSystem.setGear(DriveSystem.Gear.HIGH);
-            } else if (operatorBox.getRawButton(3) && driveSystem.getGear() == DriveSystem.Gear.HIGH) {
-                driveSystem.setAutoShiftEnabled(false);
-                driveSystem.setGear(DriveSystem.Gear.LOW);
-            }
+        // Auto target activation
+        autoTargetEnabled = driveStick.getRawButton(10);
+
+        // Tip protection activation
+        /*if (driveWheel.getRawButton(5)) { //Driver override for tipping protection - left wheel paddle
+            tipProtectionEnabled = false;
         } else {
-            driveSystem.setAutoShiftEnabled(true);
+            if (Math.abs(ypr[2]) >= 10) { //Activate tipping protection
+                tipProtectionEnabled = true;
+                Shuffleboard.addEventMarker("Tip protection enabled", EventImportance.kHigh);
+                System.out.println("Tip protection enabled");
+
+            } else if (Math.abs(ypr[1]) < 1 && tipProtectionEnabled) { //Disable when safe
+                tipProtectionEnabled = false;
+                Shuffleboard.addEventMarker("Tip protection disabled", EventImportance.kHigh);
+                System.out.println("Tip protection disabled");
+            }
+        }*/
+
+        // PID control override (toggle)
+        if (driveWheel.getRawButtonPressed(6)) {
+            driveSystem.setPIDEnabled(!driveSystem.isPIDEnabled());
+        }
+
+        // Nitro boost override (this is very evil)
+        if (!driveSystem.isPIDEnabled() && driveStick.getRawButton(1)) {
+            driveSystem.setMotorSafetyEnabled(false);
+            nitroBoostEnabled = true;
+        } else {
+            driveSystem.setMotorSafetyEnabled(true);
+            nitroBoostEnabled = false;
         }
 
         // Robot drive - handles all override moves
-        if (tipProtectionEnabled) { // Tipping protection overrides driver input
+        /*if (tipProtectionEnabled) { // Tipping protection overrides driver input
             autoTargetEnabled = false;
             driveSystem.setSetpoints(Math.copySign(3.0, ypr[1]), Math.copySign(3.0, ypr[1])); //TODO tune this if we need it
-        } else if (autoTargetEnabled) {
+        } else*/
+
+        if (autoTargetEnabled) {
             var driveSpeed = 1.0; //in ft/sec - TODO parameterize?
             var turnSpeed = rioduino.getTargetCenterOffset() / AUTO_VISION_CORRECTION_DIVISOR;
 
@@ -270,31 +299,25 @@ public final class Robot extends TimedRobot {
             }
 
             driveSystem.setSetpoints(driveSpeed + turnSpeed, driveSpeed - turnSpeed);
+
+        } else if (nitroBoostEnabled) {
+            driveSystem.arcadeDrive(-driveStick.getY() * 2.0, driveWheel.getX() * DRIVE_WHEEL_COEFFICIENT, false);
+
         } else {
-            driveSystem.arcadeDrive(-driveStick.getY(), driveWheel.getX(), true);
+            driveSystem.arcadeDrive(-driveStick.getY(), driveWheel.getX() * DRIVE_WHEEL_COEFFICIENT, true);
         }
 
-        // Auto target activation
-        if (driveStick.getRawButton(10)) {
-            autoTargetEnabled = true;
-        } else {
-            autoTargetEnabled = false;
-        }
-
-        // Tip protection activation
-        if (driveWheel.getRawButton(5)) { //Driver override for tipping protection - left wheel paddle
-            tipProtectionEnabled = false;
-        } else {
-            if (Math.abs(ypr[1]) >= 10) { //Activate tipping protection
-                tipProtectionEnabled = true;
-                Shuffleboard.addEventMarker("Tip protection enabled", EventImportance.kHigh);
-                System.out.println("Tip protection enabled");
-
-            } else if (Math.abs(ypr[1]) < 1 && tipProtectionEnabled) { //Disable when safe
-                tipProtectionEnabled = false;
-                Shuffleboard.addEventMarker("Tip protection disabled", EventImportance.kHigh);
-                System.out.println("Tip protection disabled");
+        // Auto shifting
+        if (operatorBox.getRawButton(2) || operatorBox.getRawButton(3)) { //Manual shifting lock - tri-state switch
+            if (operatorBox.getRawButton(2) && driveSystem.getGear() == DriveSystem.Gear.LOW) {
+                driveSystem.setAutoShiftEnabled(false);
+                driveSystem.setGear(DriveSystem.Gear.HIGH);
+            } else if (operatorBox.getRawButton(3) && driveSystem.getGear() == DriveSystem.Gear.HIGH) {
+                driveSystem.setAutoShiftEnabled(false);
+                driveSystem.setGear(DriveSystem.Gear.LOW);
             }
+        } else {
+            driveSystem.setAutoShiftEnabled(true);
         }
 
         // Arm control
@@ -302,7 +325,7 @@ public final class Robot extends TimedRobot {
             robotArm.manualControl(0, xboxController.getY(GenericHID.Hand.kLeft),
                     xboxController.getY(GenericHID.Hand.kRight));
         } else {
-            robotArm.fineWristControl(xboxController.getY(GenericHID.Hand.kLeft) * FINE_WRIST_CONTROL_COEFFICIENT);
+            //robotArm.fineWristControl(xboxController.getY(GenericHID.Hand.kLeft) * FINE_WRIST_CONTROL_COEFFICIENT);
             robotArm.automatedControl();
         }
 
@@ -322,7 +345,7 @@ public final class Robot extends TimedRobot {
             robotArm.setPose(RobotArm.Pose.MID_ROCKET_HATCH);
 
         } else if (xboxController.getXButtonPressed()) {
-            robotArm.setPose(RobotArm.Pose.FLOOR_HATCH_PICKUP);
+            //robotArm.setPose(RobotArm.Pose.FLOOR_HATCH_PICKUP);
 
         } else if (xboxController.getPOV() == 180) { //Down on d-pad
             robotArm.setPose(RobotArm.Pose.LOW_ROCKET_CARGO);
@@ -333,7 +356,10 @@ public final class Robot extends TimedRobot {
         } else if (xboxController.getPOV() == 270) { //Left on d-pad
             robotArm.setPose(RobotArm.Pose.CARGO_SHIP_CARGO);
 
-        }  else if (xboxController.getStartButtonPressed()) {
+        } else if (xboxController.getBackButtonPressed()) {
+            robotArm.setPose(RobotArm.Pose.ATTACK);
+
+        } else if (xboxController.getStartButtonPressed()) {
             robotArm.setPose(RobotArm.Pose.FLOOR_CARGO_PICKUP);
 
         }
@@ -348,11 +374,11 @@ public final class Robot extends TimedRobot {
         }
 
         // Hatch intake
-        if (xboxController.getBumperPressed(GenericHID.Hand.kRight)) {
+        /*if (xboxController.getBumperPressed(GenericHID.Hand.kRight)) {
             endEffector.setHatchGrabberExtended(true);
         } else if (xboxController.getBumperPressed(GenericHID.Hand.kLeft)) {
             endEffector.setHatchGrabberExtended(false);
-        }
+        }*/
 
         // Skid plate deployment
         if (driveStick.getRawButtonPressed(2)) {
@@ -378,8 +404,7 @@ public final class Robot extends TimedRobot {
         Scheduler.getInstance().removeAll();
         teleopScheduler.disable();
 
-        Shuffleboard.stopRecording();
-        Shuffleboard.clearRecordingFileNameFormat();
+        //Shuffleboard.clearRecordingFileNameFormat();
     }
 
     /**

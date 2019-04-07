@@ -43,22 +43,26 @@ public final class CargoShipAutonomous extends CommandGroup {
         // Turn to angle
         addSequential(new IMUTurn(driveSystem, ypr, -10 * side.invert));
 
-        // Drive forward to first cargo bay
-        addSequential(new EncoderMove(driveSystem, ypr, 10.5));
+        // Drive forward to first cargo bay (no, I don't like this)
+        if (side == Autonomous.Side.LEFT) {
+            addSequential(new EncoderMove(driveSystem, ypr, 11.55));
+        } else {
+            addSequential(new EncoderMove(driveSystem, ypr, 11.35));
+        }
 
         // Turn to face cargo bay
         addSequential(new IMUTurn(driveSystem, ypr, 90 * side.invert));
 
         // Drive forward to cargo ship
-        addSequential(new EncoderMove(driveSystem, ypr, 1.5));
+        addSequential(new EncoderMove(driveSystem, ypr, 1.0));
 
         // Score!
-        //addSequential(new InstantCommand(() -> endEffector.setIntake(EndEffector.IntakeDirection.OUT, 0.5)));
+        addSequential(new InstantCommand(() -> endEffector.setIntake(EndEffector.IntakeDirection.OUT, 0.5)));
 
         // Wait a second
-        //addSequential(new TimedMove(driveSystem, ypr, 0.0, 1.0)); //Stop in place
+        addSequential(new TimedMove(driveSystem, ypr, 0.0, 1.0)); //Stop in place
 
         // Shut off intakes
-        //addSequential(new InstantCommand(() -> endEffector.setIntake(EndEffector.IntakeDirection.STOPPED, 0.0)));
+        addSequential(new InstantCommand(() -> endEffector.setIntake(EndEffector.IntakeDirection.STOPPED, 0.0)));
     }
 }
